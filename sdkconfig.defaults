@@ -1,32 +1,16 @@
-# Universal Wendy firmware defaults.
-# Target-specific overrides live in sdkconfig.defaults.<target>:
-#   - sdkconfig.defaults.esp32c6   (single-chip board)
-#   - sdkconfig.defaults.esp32p4   (FireBeetle 2 ESP32-P4 + on-board C6)
+# Flash size - keep at 4 MB; partitions.csv is sized accordingly.
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
 
-# WAMR configuration (interpreter/AOT/loader knobs are picked per-target -
-# tiny C6 builds prefer classic + mini loader; the P4 with PSRAM uses fast.)
-CONFIG_WENDY_WASM_STACK_SIZE=8192
-CONFIG_WENDY_WASM_HEAP_SIZE=0
-# 0 = use system allocator (no pre-allocated pool). Trades the hard guest
-# ceiling for letting wifi DMA buffers and the wasm runtime share heap
-# dynamically. With a 224 KiB pre-allocated pool on ESP32-C6, the DMA pool
-# was being starved to single bytes, breaking outbound wifi entirely.
-CONFIG_WENDY_WASM_POOL_SIZE=0
+# Partition table - custom CSV with single WASM slot
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
 
-# Bytecode/interpreter-only runtime: trim optional WAMR subsystems.
-# CONFIG_WAMR_ENABLE_AOT is not set
-# CONFIG_WAMR_ENABLE_APP_FRAMEWORK is not set
-
-# Disable WAMR pthread (causes assert in FreeRTOS tasks)
-# CONFIG_WAMR_ENABLE_LIB_PTHREAD is not set
-# CONFIG_WAMR_ENABLE_SHARED_MEMORY is not set
-
-# Disable WAMR built-in WASI (we provide our own shim)
-# CONFIG_WAMR_ENABLE_LIBC_WASI is not set
-# CONFIG_WAMR_ENABLE_MEMORY_PROFILING is not set
-
-# Swift async executables need WAMR ref-types support for their funcref table.
-CONFIG_WAMR_ENABLE_REF_TYPES=y
+# Move WiFi/PHY hot paths from IRAM to flash (frees ~15-25 KB DIRAM)
+CONFIG_ESP_WIFI_IRAM_OPT=n
+CONFIG_ESP_WIFI_EXTRA_IRAM_OPT=n
+CONFIG_ESP_WIFI_RX_IRAM_OPT=n
+CONFIG_ESP_WIFI_SLP_IRAM_OPT=n
+CONFIG_ESP_PHY_IRAM_OPT=n
 
 # BLE stack (NimBLE) - runs on the host MCU regardless of whether the
 # controller is native (C6) or remote-over-VHCI via esp_hosted (P4).
@@ -41,9 +25,6 @@ CONFIG_MBEDTLS_DYNAMIC_BUFFER=y
 CONFIG_MBEDTLS_DYNAMIC_FREE_PEER_CERT=y
 CONFIG_MBEDTLS_DYNAMIC_FREE_CONFIG_DATA=y
 CONFIG_MBEDTLS_SSL_IN_CONTENT_LEN=8192
-
-# App-facing networking (sockets, DNS, TLS)
-CONFIG_WENDY_NET=y
 
 # Console over UART (compatible with Wokwi and most debug setups)
 CONFIG_ESP_CONSOLE_UART_DEFAULT=y
