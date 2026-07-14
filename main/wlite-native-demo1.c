@@ -12,6 +12,7 @@
 void app_main(void)
 {
     ESP_ERROR_CHECK(wendy_core_init());
+    int count = 0;
 
     led_strip_config_t strip_config = {
         .strip_gpio_num = RGB_LED_GPIO,
@@ -29,11 +30,12 @@ void app_main(void)
     while (true) {
         on = !on;
         if (on) {
-            ESP_ERROR_CHECK(led_strip_set_pixel(led_strip, 0, 16, 16, 16));
+            ESP_ERROR_CHECK(led_strip_set_pixel(led_strip, 0, 16, 16, 0));
             ESP_ERROR_CHECK(led_strip_refresh(led_strip));
         } else {
             ESP_ERROR_CHECK(led_strip_clear(led_strip));
         }
         vTaskDelay(pdMS_TO_TICKS(500));
+        printf("Cycle %d\n", count++);
     }
 }
